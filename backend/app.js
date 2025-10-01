@@ -1,56 +1,112 @@
-const express = require("express")
-const mongoose = require("mongoose")
-const cors = require("cors")
-const bcrypt = require("bcrypt")
-const jwt = require("jsonwebtoken")
+// Importing required packages
+const express = require("express")          // Web framework to create APIs
+const mongoose = require("mongoose")        // MongoDB object modeling tool
+const cors = require("cors")                // Allows cross-origin requests (frontend <-> backend)
+const bcrypt = require("bcrypt")            // For hashing and comparing passwords
+const jwt = require("jsonwebtoken")         // For generating JSON Web Tokens (authentication)
 
+// Load environment variables from .env file
 const dotenv = require("dotenv")
 dotenv.config()
 
+// Import the user model (MongoDB schema for users)
 const userModel = require("./models/users")
 
+// Create an Express app instance
 let app = express()
 
-app.use(express.json())
-app.use(cors())
+// Middleware
+app.use(express.json())  // Parse incoming JSON requests
+app.use(cors())          // Allow cross-origin requests (important for frontend integration)
 
 
-mongoose.connect(process.env.MONGO_URI).then(()=>console.log("DB connected successfully")).catch(err=>console.log("An error occured : ",err))
+// Connect to MongoDB using URI from .env file
+mongoose.connect(process.env.MONGO_URI)
+    .then(()=>console.log("DB connected successfully"))
+    .catch(err=>console.log("An error occured : ",err))
 
+
+// Test route - Just to check if API is running
 app.post("/",(req,res)=>{
     res.send("Hello")
     //console.log("connection ok for api /")
 })
 
 
-//user signUp
-app.post("/signUp",async(req,res)=>{
-    let input = req.body
-    let hashedPassword = bcrypt.hashSync(req.body.password,10)
-    console.log(hashedPassword)
-    req.body.password = hashedPassword
-    console.log(input)
+// -------------------- USER SIGNUP --------------------
+app.post("/signUp", async (req,res) => {
+    try {
+        let input = req.body
 
-    userModel.find({email:req.body.email}).then(
-        (items)=>{
-            if (items.length>0) {
-                res.json({"status":"already exist"})
-            } else {
-                let result = new userModel(input)
-                result.save()
-                res.json({"status":"success"})
+        // Hash the user password before saving (for security)
+        let hashedPassword = bcrypt.hashSync(req.body.password, 10) // 10 = salt rounds
+        req.body.password = hashedPassword  // Replace plain password with hashed version
+
+        // Check if user already exists with given email
+        userModel.find({ email: req.body.email }).then(
+            (items) => {
+                if (items.length > 0) {
+                    // If email already exists in DB
+                    res.json({ "status": "already exist" })
+                } else {
+                    // Create new user with input data
+                    let result = new userModel(input)
+                    result.save()  // Save user in DB
+                    res.json({ "status": "success" })
+                }
             }
-        }
-    ).catch(
-        (error)=>{res.send(error)}
-    )
+        ).catch(
+            (error) => { res.send(error) } // If any DB error occurs
+        )
+    } catch (err) {
+        // Catch unexpected errors
+        res.json({ status: "error", errorMessage: err.message })
+    }
 })
 
-// user signIn
 
-app.post("/signIn",(req,res))
+// -------------------- USER SIGNIN --------------------
+app.post("/signIn", async (req, res) => {
+    try {
+        const { email, password } = req.body;  // Extract login details from request body
+
+        // Check if user exists in DB
+        const user = await userModel.findOne({ email });
+        if (!user) {
+            return res.json({ status: "user not found" }); // No account with this email
+        }
+
+        // Validate entered password with hashed password in DB
+        const passValidate = bcrypt.compareSync(password, user.password);
+        if (!passValidate) {
+            return res.json({ status: "incorrect password" }); // Wrong password
+        }
+
+        // Generate JWT token (used for authentication in frontend)
+        jwt.sign(
+            { email },               // Payload (what to store in token)
+            "blog-app",              // Secret key (should be kept in .env)
+            { expiresIn: "1d" },     // Token expiration (1 day)
+            (error, token) => {
+                if (error) {
+                    return res.json({ status: "error", errorMessage: error });
+                }
+                // If successful, send token + userId back to frontend
+                res.json({
+                    status: "success",
+                    token: token,
+                    userId: user._id
+                });
+            }
+        );
+
+    } catch (err) {
+        res.json({ status: "error", errorMessage: err.message })
+    }
+})
 
 
-app.listen(3030,()=>{
+// Start the server on port 3030
+app.listen(3030, () => {
     console.log("Server Started")
 })
