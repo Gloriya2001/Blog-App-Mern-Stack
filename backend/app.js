@@ -12,6 +12,9 @@ dotenv.config()
 // Import the user model (MongoDB schema for users)
 const userModel = require("./models/users")
 
+// Import the post model (MongoDB schema for posts)
+const postModel = require("./models/posts")
+
 // Create an Express app instance
 let app = express()
 
@@ -85,7 +88,7 @@ app.post("/signIn", async (req, res) => {
         // Generate JWT token (used for authentication in frontend)
         jwt.sign(
             { email },               // Payload (what to store in token)
-            "blog-app",              // Secret key (should be kept in .env)
+            process.env.JWT_SECRET,              // Secret key (should be kept in .env)
             { expiresIn: "1d" },     // Token expiration (1 day)
             (error, token) => {
                 if (error) {
@@ -104,6 +107,33 @@ app.post("/signIn", async (req, res) => {
         res.json({ status: "error", errorMessage: err.message })
     }
 })
+
+// -------------------- CREATE A POST --------------------
+app.post("/create", async (req, res) => {
+
+    // get input data from request body
+    let input = req.body;
+
+    // extract token from request headers (custom header "token")
+    let token = req.headers.token;
+
+    // verify the token using JWT and secret key
+    jwt.verify(token, process.env.JWT_SECRET, async (error, decoded) => {
+
+        // if token is valid and contains user email
+        if (decoded && decoded.email) {
+
+            // create a new post document using input data , save it and send success response
+            let result = new postModel(input);
+            await result.save();
+            res.json({ "status": "success" });
+
+        } else {
+            // if token is invalid, expired, or missing required payload
+            res.json({ "status": "invalid authentication" });
+        }
+    });
+});
 
 
 // Start the server on port 3030
