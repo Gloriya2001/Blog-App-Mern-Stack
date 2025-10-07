@@ -135,6 +135,30 @@ app.post("/create", async (req, res) => {
     });
 });
 
+//view all post
+
+app.post("/viewAll",(req,res)=>{
+
+    let token=req.headers.token
+
+    jwt.verify(token, process.env.JWT_SECRET, async(error,decoded)=>{
+
+        if (decoded && decoded.email) {
+            
+            postModel.find().then(
+                (item)=>{
+                    res.json(item)
+                }
+            ).catch(
+                (error)=>{
+                    res.json({"status":error})
+                }
+            )
+        } else {
+            res.json({"status":"invalid authentication"})
+        }
+    })
+})
 
 // Start the server on port 3030
 app.listen(3030, () => {
