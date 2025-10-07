@@ -135,30 +135,65 @@ app.post("/create", async (req, res) => {
     });
 });
 
-//view all post
+// -------------------- VIEW ALL POSTS --------------------
+app.post("/viewAll", (req, res) => {
 
-app.post("/viewAll",(req,res)=>{
+    // Get token from request headers
+    let token = req.headers.token;
 
-    let token=req.headers.token
+    // Verify the JWT token using secret key
+    jwt.verify(token, process.env.JWT_SECRET, async (error, decoded) => {
 
-    jwt.verify(token, process.env.JWT_SECRET, async(error,decoded)=>{
-
+        // If token is valid and contains user email
         if (decoded && decoded.email) {
-            
-            postModel.find().then(
-                (item)=>{
-                    res.json(item)
-                }
-            ).catch(
-                (error)=>{
-                    res.json({"status":error})
-                }
-            )
+
+            // Fetch all posts from the database
+            postModel.find()
+                .then((item) => {
+                    res.json(item); // Send all posts as JSON response
+                })
+                .catch((error) => {
+                    res.json({ "status": error }); // Handle any DB errors
+                });
+
         } else {
-            res.json({"status":"invalid authentication"})
+            // Invalid or expired token
+            res.json({ "status": "invalid authentication" });
         }
-    })
-})
+    });
+});
+
+
+// ----------VIEW MY POST  --------------------
+app.post("/viewMyPost", (req, res) => {
+
+    // Get input (filter conditions) from request body
+    let input = req.body;
+    // Get token from request headers
+    let token = req.headers.token;
+
+    // Verify the JWT token using secret key
+    jwt.verify(token, process.env.JWT_SECRET, async (error, decoded) => {
+
+        // If token is valid and contains user email
+        if (decoded && decoded.email) {
+
+            // Find posts matching the provided filter (e.g., user's email)
+            postModel.find(input)
+                .then((item) => {
+                    res.json(item); // Send user's posts as JSON response
+                })
+                .catch((error) => {
+                    res.json({ "status": error }); // Handle any DB errors
+                });
+
+        } else {
+            // Invalid or expired token
+            res.json({ "status": "invalid authentication" });
+        }
+    });
+});
+
 
 // Start the server on port 3030
 app.listen(3030, () => {
