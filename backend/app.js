@@ -152,13 +152,16 @@ app.post("/viewAll", (req, res) => {
         .find()
         .then((item) => {
           res.json(item); // Send all posts as JSON response
+          console.log("all posts send to frontend");
         })
         .catch((error) => {
           res.json({ status: error }); // Handle any DB errors
+          console.log("something went wrong");
         });
     } else {
       // Invalid or expired token
       res.json({ status: "invalid authentication" });
+      console.log("invalid authentication");
     }
   });
 });
@@ -179,13 +182,16 @@ app.post("/viewMyPost", (req, res) => {
         .find(input)
         .then((item) => {
           res.json(item); // Send user's posts as JSON response
+          console.log("my post send to frontend");
         })
         .catch((error) => {
           res.json({ status: error }); // Handle any DB errors
+          console.log("something went wrong");
         });
     } else {
       // Invalid or expired token
       res.json({ status: "invalid authentication" });
+      console.log("invalid authentication");
     }
   });
 });

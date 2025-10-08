@@ -1,6 +1,7 @@
 // Importing required modules
 import axios from 'axios'              // For making HTTP requests
 import React, { useState } from 'react' // Importing React and useState hook
+import Navbar from './Navbar'
 
 const CreatePost = () => {
 
@@ -47,6 +48,7 @@ const CreatePost = () => {
     // UI structure for creating a post
     return (
         <div>
+            <Navbar/>
             <div className="container">
                 <div className="row">
                     <div className="col col-12 col-sm-12 col-md-12">
