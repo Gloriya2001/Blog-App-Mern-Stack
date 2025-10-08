@@ -51,11 +51,13 @@ app.post("/signUp", async (req,res) => {
                 if (items.length > 0) {
                     // If email already exists in DB
                     res.json({ "status": "already exist" })
+                    console.log("user already exist")
                 } else {
                     // Create new user with input data
                     let result = new userModel(input)
                     result.save()  // Save user in DB
                     res.json({ "status": "success" })
+                    console.log("--user created",input)
                 }
             }
         ).catch(
