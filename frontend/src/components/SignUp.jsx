@@ -148,7 +148,7 @@ const SignUp = () => {
 
                         {/* Back to login link */}
                         <div className="col-12 text-center">
-                            <a href="" className="btn btn-primary mt-2">Back to Login</a>
+                            <a href="/signIn" className="btn btn-primary mt-2">Back to Login</a>
                         </div>
                     </div>
 
